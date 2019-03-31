@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sys
-if not '.' in sys.path: sys.path.append('.')
-if not '..' in sys.path: sys.path.append('..')
+if '.' not in sys.path: sys.path.append('.')
+if '..' not in sys.path: sys.path.append('..')
 from rhioutils import *
 
 try:
@@ -73,26 +73,32 @@ def genericUploadBasicRecursiveImplWithProgress(srcPath, destPath, conn):
         OSUploadRegularFileWithProgress(srcPath, destPath, fileInfo, conn)
 
 
-def countTotalFilesAndFoldersIntoMap(path, m):
-    # tFiles,tFolders = 0,0 both 64-bit unsigned
-    tItems = [0, 0]
+def countTotalStatsIntoMap(path, m):
+    # tFiles,tFolders,tSize = 0,0,0 all 64-bit unsigned
+    tItems = [0, 0, 0]
+
+    try:
+        filestats = os.stat(path)
+    except:
+        print("Access error to ", path, ",skipping...")
+        m[path] = tItems
+        return tItems  # in any case of access error, do not count the file
 
     if os.path.isfile(path):
-        tItems[0] += 1
+        tItems[0] += 1  # tFiles
+        tItems[2] = filestats.st_size  # tSize
         m[path] = tItems
         return tItems
-
-    if not os.path.isdir(path):
-        raise Exception("Access error to " + path)
 
     tItems[1] += 1
 
     for filename in os.listdir(path):
         childpath = os.path.join(path, filename)
         if os.path.isdir(childpath):
-            subnum = countTotalFilesAndFoldersIntoMap(childpath, m)
+            subnum = countTotalStatsIntoMap(childpath, m)
             tItems[0] += subnum[0]  # tFiles
             tItems[1] += subnum[1]  # tFolders
+            tItems[2] += subnum[2]  # tSize
         elif os.path.isfile(childpath):
             tItems[0] += 1
     m[path] = tItems
@@ -218,11 +224,12 @@ def server_download(conn, rqflagsunused):
     counts = [0, 0]
 
     for pathpair in v:
-        itemTotals = countTotalFilesAndFoldersIntoMap(pathpair[0], descendantCountMap)
+        itemTotals = countTotalStatsIntoMap(pathpair[0], descendantCountMap)
         counts[0] += itemTotals[0]
         counts[1] += itemTotals[1]
 
     conn.sendall(struct.pack("@Q", counts[0]))  # tFiles
+    conn.sendall(struct.pack("@Q", counts[0]))  # TODO tSize
 
     for pathpair in v:
         genericUploadBasicRecursiveImplWithProgress(pathpair[0], pathpair[1], conn)

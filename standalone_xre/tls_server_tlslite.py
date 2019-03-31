@@ -112,6 +112,10 @@ def serverCmd(address,privateKey_, certChain_, hv=None):
 
 
     class MyTLSServer(ThreadingMixIn, TLSSocketServerMixIn, SocketServer.TCPServer):
+        # customize ciphersuites and crypto back-end
+        # from tlslite import handshakesettings
+        # handshakesettings.CIPHER_NAMES = ["aes128gcm"]
+        # handshakesettings.CIPHER_IMPLEMENTATIONS = ["openssl","pycrypto"]
 
         def handshake(self, connection):
             print("About to handshake...")
