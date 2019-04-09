@@ -227,9 +227,10 @@ def server_download(conn, rqflagsunused):
         itemTotals = countTotalStatsIntoMap(pathpair[0], descendantCountMap)
         counts[0] += itemTotals[0]
         counts[1] += itemTotals[1]
+        counts[2] += itemTotals[2]
 
     conn.sendall(struct.pack("@Q", counts[0]))  # tFiles
-    conn.sendall(struct.pack("@Q", counts[0]))  # TODO tSize
+    conn.sendall(struct.pack("@Q", counts[2]))  # tSize
 
     for pathpair in v:
         genericUploadBasicRecursiveImplWithProgress(pathpair[0], pathpair[1], conn)

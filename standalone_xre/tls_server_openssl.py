@@ -23,7 +23,7 @@ def xre_server_session_wrapper(conn):
 
 if __name__ == '__main__':
     bindsocket = socket.socket()
-    bindsocket.bind(('', 11111))
+    bindsocket.bind(('0.0.0.0', 11111))
     bindsocket.listen(5)
     print('XRE server started')
     while True:
