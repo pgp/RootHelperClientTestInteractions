@@ -33,8 +33,8 @@ def remote_server(start=True):
 
 		if resp == '\x00':
 			print("Client connected:", clientIPandPort)
-			# receive TLS shared session secret hash (64-byte hex encoded SHA256)
-			print('TLS master secret hash is:', toHex(sock.recv(64)))
+			# receive TLS shared session secret hash (32-byte SHA256)
+			print('TLS master secret hash is:', toHex(sock.recv(32)))
 		else:
 			print("Client disconnected:", clientIPandPort)
 

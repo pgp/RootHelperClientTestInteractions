@@ -103,8 +103,8 @@ def remote_client(serverHost="192.168.43.1",serverPort=11111, unixSocketNameWith
 		print("Error byte received, errno is:", struct.unpack("@I", sock.recv(4))[0])
 		return
 
-	# receive TLS shared session secret hash (64-byte hex encoded SHA256)
-	print("TLS master secret hash is:", toHex(sock.recv(64)))
+	# receive TLS shared session secret hash (32-byte SHA256)
+	print("TLS master secret hash is:", toHex(sock.recv(32)))
 
 	return sock
 
