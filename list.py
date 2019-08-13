@@ -1,34 +1,14 @@
 # -*- coding: utf-8 -*-
+from time import sleep
+
+from standalone_xre.xre_common import receiveStringWithLen
 from net_common import *
 import struct
 import sys
 from datetime import datetime
 
-if __name__ == "__main__":
-    sock = get_connected_local_socket()
 
-    # rootpath = encodeString("/")
-    rootpath = encodeString("/sdcard/1.7z")
-
-    # sock.sendall(b'\x01')  # LS request
-    rq = bytearray([ord(b'\x01') ^ (1 << 5)])  # LS archive request
-    sock.sendall(rq)
-
-    sock.sendall(struct.pack("@H", len(rootpath)))  # len of path as unsigned short
-    sock.sendall(rootpath)
-
-    # send empty password
-    sock.sendall(b'\x00')
-    # or send non-empty password
-    # pwd = encodeString("qwerty")
-    # sock.sendall(struct.pack("@B",len(pwd)))
-    # sock.sendall(pwd)
-
-    resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
-
-    if resp != b'\x00':
-        print("Error byte received, errno:", struct.unpack("=i", sock.recv(4))[0])
-        sys.exit(0)
+def loopOverContent(sock):
     cnt = []
     while True:
         ll = struct.unpack("@H", sock.recv(2))[0]  # receive file entry (filename) length
@@ -41,3 +21,59 @@ if __name__ == "__main__":
         cnt.append((fname, fdate, fperms, fsize))
         print(fname + '\t' + str(fdate) + '\t' + fperms + '\t' + str(fsize))
     sock.close()
+
+
+def listDir(path):
+    sock = get_connected_local_socket()
+    path = encodeString(path)
+
+    sock.sendall(b'\x01')  # LS request
+
+    sock.sendall(struct.pack("@H", len(path)))  # len of path as unsigned short
+    sock.sendall(path)
+
+    resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
+    if resp != b'\x00':
+        if resp == b'\x11':
+            print('Received redirect on', receiveStringWithLen(sock))
+        else:
+            print("Error byte received, errno:", struct.unpack("=i", sock.recv(4))[0])
+            sys.exit(0)
+
+    loopOverContent(sock)
+
+
+def listArchive(path):
+    sock = get_connected_local_socket()
+    path = encodeString(path)
+
+    rq = bytearray([ord(b'\x01') ^ (1 << 5)])  # LS archive request
+    sock.sendall(rq)
+
+    sock.sendall(struct.pack("@H", len(path)))  # len of path as unsigned short
+    sock.sendall(path)
+
+    # send empty password
+    sock.sendall(b'\x00')
+    # or send non-empty password
+    # pwd = encodeString("qwerty")
+    # sock.sendall(struct.pack("@B",len(pwd)))
+    # sock.sendall(pwd)
+
+    resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
+    if resp != b'\x00':
+        if resp == b'\x11':
+            print('Protocol error - Redirect response not allowed in list archive', receiveStringWithLen(sock))
+        else:
+            print("Error byte received, errno:", struct.unpack("=i", sock.recv(4))[0])
+        sys.exit(0)
+
+    loopOverContent(sock)
+
+
+if __name__ == "__main__":
+    listDir('')
+    # listDir('/')
+    print('sleeping')
+    sleep(2)
+    listArchive('/sdcard/1.7z')
