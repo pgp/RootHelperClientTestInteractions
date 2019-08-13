@@ -7,10 +7,10 @@ from datetime import datetime
 if __name__ == "__main__":
     sock = get_connected_local_socket()
 
-    # rootpath = encodePath("/")
+    # rootpath = encodeString("/")
     rootpath = encodeString("/sdcard/1.7z")
-    # sock.sendall('b\x01')  # LS request
 
+    # sock.sendall(b'\x01')  # LS request
     rq = bytearray([ord(b'\x01') ^ (1 << 5)])  # LS archive request
     sock.sendall(rq)
 
