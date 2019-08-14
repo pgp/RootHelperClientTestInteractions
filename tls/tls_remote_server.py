@@ -1,22 +1,28 @@
 import sys
+
 if not '..' in sys.path: sys.path.append('..')
 from net_common import *
+from standalone_xre.xre_common import sendStringWithLen
 
 import struct
 
 def remote_server(start=True):
 	sock = get_connected_local_socket()
 
-	# start_server_rq = chr(ord('\x12') ^ (7 << 5))
-	# stop_server_rq = chr(ord('\x12') ^ (0 << 5))
-	# get_server_status_rq = chr(ord('\x12') ^ (2 << 5))
 	start_server_rq = bytearray([ord(b'\x12') ^ (7 << 5)])
+	start_server_with_announce_rq = bytearray([ord(b'\x12') ^ (5 << 5)])
 	stop_server_rq = bytearray([ord(b'\x12') ^ (0 << 5)])
 	get_server_status_rq = bytearray([ord(b'\x12') ^ (2 << 5)])
 
-	sock.sendall(start_server_rq if start else stop_server_rq)
+	sock.sendall(start_server_with_announce_rq if start else stop_server_rq)
 
-	sock.sendall(bytearray([0])) # don't restrict access to a custom directory
+	# OLD PROTOCOL (rh version < 1.2)
+	# sock.sendall(bytearray([0]))  # don't restrict access to a custom directory
+
+	# NEW PROTOCOL, send default, announced and exposed path on start
+	sendStringWithLen(sock, b'')  # default path (send empty for leaving unchanged)
+	sendStringWithLen(sock, b'')  # announced path (enabling announce depends on start flags)
+	sendStringWithLen(sock, b'')  # exposed path (send empty for no restrictions)
 
 	resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
 	if resp != b'\x00':
@@ -31,7 +37,7 @@ def remote_server(start=True):
 		l = struct.unpack("@B", sock.recv(1))[0]
 		clientIPandPort = sock.recv(l)
 
-		if resp == '\x00':
+		if resp == b'\x00':
 			print("Client connected:", clientIPandPort)
 			# receive TLS shared session secret hash (32-byte SHA256)
 			print('TLS master secret hash is:', toHex(sock.recv(32)))
