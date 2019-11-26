@@ -14,7 +14,7 @@ class IndexListForRelativeExtract:
 def ls_archive(src_archive_path, password=None):
     sock = get_connected_local_socket()
 
-    rq = bytearray([ord('\x01') ^ (7 << 5)])  # all flag bits set (ls archive)
+    rq = bytearray([ord(b'\x01') ^ (7 << 5)])  # all flag bits set (ls archive)
 
     src_archive_path = encodeString(src_archive_path)
     sock.sendall(rq)
@@ -78,7 +78,7 @@ def extract_archive_with_progress(src_archive_path, dest_folder_path, indexListO
         sock.sendall(struct.pack("@I", indexListOrEntireContent.stripPathLen))
 
     resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
-    if resp != '\x00':
+    if resp != b'\x00':
         print("Error byte received, errno:", struct.unpack("@I", sock.recv(4))[0])
         return
 

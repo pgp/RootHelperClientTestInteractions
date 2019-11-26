@@ -7,7 +7,7 @@ def stats_file(path):
     sock = get_connected_local_socket()
 
     #  send stat request
-    # rq = chr(ord('\x05') ^ (1 << 5))  # file stats (flag bits: 001_2 = 1) # only Python 2
+    # rq = chr(ord(b'\x05') ^ (1 << 5))  # file stats (flag bits: 001_2 = 1) # only Python 2
     rq = bytearray([ord(b'\x05') ^ (1 << 5)])  # file stats (flag bits: 001_2 = 1)
 
     sock.sendall(rq)
@@ -46,7 +46,7 @@ def stats_dir(path):
     sock = get_connected_local_socket()
 
     #  send stat request
-    # rq = chr(ord('\x05') ^ (2 << 5))  # dir stats (flag bits: 010_2 = 2)
+    # rq = chr(ord(b'\x05') ^ (2 << 5))  # dir stats (flag bits: 010_2 = 2)
     rq = bytearray([ord(b'\x05') ^ (2 << 5)])  # dir stats (flag bits: 010_2 = 2)
 
     sock.sendall(rq)
@@ -78,7 +78,7 @@ def stats_multiple(paths):
     sock = get_connected_local_socket()
 
     #  send stat request
-    # rq = chr(ord('\x05') ^ (4 << 5))  # multiple items stats (flag bits: 100_2 = 4)
+    # rq = chr(ord(b'\x05') ^ (4 << 5))  # multiple items stats (flag bits: 100_2 = 4)
     rq = bytearray([ord(b'\x05') ^ (4 << 5)])  # multiple items stats (flag bits: 100_2 = 4)
 
     sock.sendall(rq)

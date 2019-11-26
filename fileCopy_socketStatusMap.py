@@ -166,8 +166,8 @@ def fromERR(sock): # -> SIZE or EOFs
     ytype = sock.recv(1)
 
     print('Error paths are: ',
-          x, ' of type ', ('DIR' if xtype == '\x01' else 'FILE'), ' , ',
-          y, ' of type ', ('DIR' if ytype == '\x01' else 'FILE'))
+          x, ' of type ', ('DIR' if xtype == b'\x01' else 'FILE'), ' , ',
+          y, ' of type ', ('DIR' if ytype == b'\x01' else 'FILE'))
 
     # wait error decision from user
     print('Enter error decision:')

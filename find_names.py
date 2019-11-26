@@ -33,7 +33,7 @@ def find_names(basePath,namePattern,find_in_subfolders,case_insensitive_name):
 
     # add search options flags
     if case_insensitive_name is True:
-        searchFlags = bytearray([ord('\x00') ^ 4, 0])  # case insensitive name search
+        searchFlags = bytearray([ord(b'\x00') ^ 4, 0])  # case insensitive name search
     else:
         searchFlags = bytearray([0,0])  # default, name search with case sensitivity
 

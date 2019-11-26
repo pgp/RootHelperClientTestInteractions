@@ -6,7 +6,7 @@ import struct
 
 def list_dir(sock, path='/'):
     path = encodeString(path)
-    sock.sendall('\x01')  # LS request
+    sock.sendall(b'\x01')  # LS request
     sock.sendall(struct.pack("@H", len(path)))  # len of path as unsigned short
     sock.sendall(path)
 
