@@ -3,6 +3,7 @@ import sys
 
 if not '..' in sys.path: sys.path.append('..')
 from net_common import *
+from standalone_xre.xre_common import receiveStringWithLen
 import sys
 
 
@@ -43,6 +44,7 @@ def remote_client_url_download(serverHost="v.gd",
         # receive TLS shared session secret hash (64-byte hex encoded SHA256)
         print("TLS master secret hash is:", toHex(sock.recv(32)))
 
+    print("Received filename: ", receiveStringWithLen(sock))
     print("Download size is:", struct.unpack("@Q", sock.recv(8))[0])
 
     while True:
@@ -59,8 +61,9 @@ if __name__ == '__main__':
     # rclient = remote_client_url_download(serverHost="v.gd") # mandatory SNI
     # rclient = remote_client_url_download(serverHost="fancyssl.hboeck.de",serverPort=443) # TLS 1.2 only
     # rclient = remote_client_url_download(serverHost="download-installer.cdn.mozilla.net/pub/firefox/releases/66.0.3/win64/it/Firefox%20Setup%2066.0.3.exe", targetFilename='ff.exe')
-    # rclient = remote_client_url_download(serverHost="u.nu",serverPort=443,targetFilename='unu.html')
-    rclient = remote_client_url_download(serverHost="u.nu/fftest") # HTTP 301
+    rclient = remote_client_url_download(serverHost="u.nu",serverPort=443,targetFilename='unu.html')
+    # rclient = remote_client_url_download(serverHost="u.nu/fftest") # HTTP 301
+    # rclient = remote_client_url_download(serverHost="api.github.com/repos/openssl/openssl/tags", targetFilename='openssl_tags.json')
     # rclient = remote_client_url_download(serverHost="www.cloudflare.com",serverPort=443,targetFilename='www_cloudflare.html')
     if rclient is None:
         sys.exit(-1)
