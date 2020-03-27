@@ -47,7 +47,10 @@ def listArchive(path):
     sock = get_connected_local_socket()
     path = encodeString(path)
 
-    rq = bytearray([ord(b'\x01') ^ (1 << 5)])  # LS archive request
+    # flags = 7 # standard list archive
+    flags = 6 # for checking whether the archive contains one or more items at the top level
+
+    rq = bytearray([ord(b'\x01') ^ (flags << 5)])  # LS archive request
     sock.sendall(rq)
 
     sock.sendall(struct.pack("@H", len(path)))  # len of path as unsigned short
@@ -68,7 +71,16 @@ def listArchive(path):
             print("Error byte received, errno:", struct.unpack("=i", sock.recv(4))[0])
         sys.exit(0)
 
-    loopOverContent(sock)
+    if flags == 7:
+        loopOverContent(sock)
+    else: # flags == 6
+        retval = struct.unpack("=Q", sock.recv(8))[0]
+        if retval == 2:
+            print("The archive contains more than one item at the top level")
+        elif retval == 1:
+            print("The archive contains only one item at the top level")
+        else:
+            print("There were undetected errors during archive listing")
 
 
 if __name__ == "__main__":
