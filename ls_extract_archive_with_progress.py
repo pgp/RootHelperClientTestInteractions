@@ -48,10 +48,10 @@ def ls_archive(src_archive_path, password=None):
     sock.close()
 
 
-def extract_archive_with_progress(src_archive_path, dest_folder_path, indexListOrEntireContent=None, password=None):
+def extract_archive_with_progress(src_archive_path, dest_folder_path, indexListOrEntireContent=None, password=None, smartDirectoryCreation=False):
     sock = get_connected_local_socket()
 
-    rq = b'\x07'
+    rq = bytearray([ord(b'\x07') ^ ((6 if smartDirectoryCreation else 0) << 5)])
 
     sock.sendall(rq)
     src_archive_path, dest_folder_path = encodeString(src_archive_path),encodeString(dest_folder_path)
@@ -169,10 +169,15 @@ if __name__ == "__main__":
     #                      dest_folder_path='/sdcard/BIGFILES_TEST/tttExtracted')
 
     # selective extract (C-style indices from ordered list in output from ls_archive
-    extract_archive_with_progress(src_archive_path='/sdcard/BIGFILES_TEST/t3.7z',
-                         dest_folder_path='/sdcard/BIGFILES_TEST/tttExtracted',
-                         password='qwerty',
-                         indexListOrEntireContent=IndexListForRelativeExtract(6,[10, 11]))
+    # extract_archive_with_progress(src_archive_path='/sdcard/BIGFILES_TEST/t3.7z',
+    #                      dest_folder_path='/sdcard/BIGFILES_TEST/tttExtracted',
+    #                      password='qwerty',
+    #                      indexListOrEntireContent=IndexListForRelativeExtract(6,[10, 11]))
+
+    # extract all files with smart directory creation
+    extract_archive_with_progress(src_archive_path='/sdcard/1.7z',
+                                  dest_folder_path='/sdcard/tttExtracted',
+                                  smartDirectoryCreation=True)
 
     # extract_archive_with_progress(src_archive_path=archive_path,
     #                      dest_folder_path='/sdcard/BIGFILES_TEST/encExtracted',
