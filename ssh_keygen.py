@@ -3,13 +3,10 @@ import struct
 import sys
 
 """
-PKCS8 & X509 PEM key generation
+RSA PKCS8 & X509 PEM key generation
 """
-
-if __name__ == "__main__":
-    sock = get_connected_local_socket()
-
-    rq = b'\x16'
+def send_ssh_keygen_rsa_rq(sock):
+    rq = bytearray([ord(b'\x16') ^ (0 << 5)])
 
     # key_size = 2048
     key_size = 4096
@@ -17,6 +14,20 @@ if __name__ == "__main__":
 
     sock.sendall(rq)
     sock.sendall(struct.pack("@I", key_size))
+
+"""
+ed25519 (OpenSSH format) key generation
+"""
+def send_ssh_keygen_ed25519_rq(sock):
+    rq = bytearray([ord(b'\x16') ^ (1 << 5)])
+    sock.sendall(rq)
+
+
+if __name__ == "__main__":
+    sock = get_connected_local_socket()
+
+    # send_ssh_keygen_rsa_rq(sock)
+    send_ssh_keygen_ed25519_rq(sock)
 
     resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
 
