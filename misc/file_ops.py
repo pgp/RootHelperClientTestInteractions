@@ -13,12 +13,12 @@ class FileOps(object):
     def existsIsFileIsDir(self, path):
         try:
             a = self.stat(path)
-            if stat.S_ISDIR(a.st_mode): return 2
-            else: return 1
+            if stat.S_ISDIR(a.st_mode): return 2  # directory
+            else: return 1  # file
         except FileNotFoundError:
-            return 0
+            return 0  # not-existing path
         except:
-            return -1
+            return -1  # access error or anything else
 
     def mkpath(self, path):
         if path in {'.', '/'}: # current dir and root always exist
