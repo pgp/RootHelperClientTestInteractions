@@ -165,4 +165,4 @@ class SftpFileOps(FileOps):
         self.sftp_client.rmdir(path)
 
     def rename(self, path1, path2):
-        self.sftp_client.rename(path1, path2)
+        self.sftp_client.posix_rename(path1, path2)
