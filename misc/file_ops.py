@@ -163,3 +163,29 @@ class SftpFileOps(FileOps):
 
     def rename(self, path1, path2):
         self.sftp_client.posix_rename(path1, path2)
+
+
+def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
+    """Synchronizes local_dir towards remote_dir (i.e. files in remote_dir
+    not in local_dir won't be copied to local_dir)"""
+    o1 = LocalFileOps()
+    o2 = SftpFileOps(sftp)
+
+    # ensure both base paths exist and are actual folders
+    o1.mkpath(local_dir)
+    o2.mkpath(remote_dir)
+
+    # stack of (filename, local_relpath_including_base_dir, remote_relpath_including_remote_dir)
+    S =  [(local_dir, remote_dir)]
+
+    while S:
+        relpath, remote_relpath = S.pop()
+        efd = o1.existsIsFileIsDir(relpath)
+        if efd == 1:
+            p1 = relpath
+            p2 = remote_relpath
+            o2.mkpath(os.path.dirname(p2))
+            print(f'Uploading local file {p1} to remote path {p2}')
+            sftp.put(p1, p2) # TODO upload only if modification time of p1 > modification time of p2
+        elif efd == 2:
+            S.extend(((os.path.join(relpath, filename)),(os.path.join(remote_relpath, filename))) for filename in o1.listdir(relpath))
