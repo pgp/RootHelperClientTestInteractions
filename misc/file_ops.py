@@ -104,6 +104,10 @@ class FileOps(object):
     def rmdir(self, path):
         pass
 
+    @abc.abstractmethod
+    def rename(self, path1, path2):
+        pass
+
 
 class LocalFileOps(FileOps):
 
@@ -135,6 +139,9 @@ class LocalFileOps(FileOps):
     def rmdir(self, path):
         os.rmdir(path)
 
+    def rename(self, path1, path2):
+        os.renames(path1, path2)
+
 
 class SftpFileOps(FileOps):
 
@@ -156,3 +163,6 @@ class SftpFileOps(FileOps):
 
     def rmdir(self, path):
         self.sftp_client.rmdir(path)
+
+    def rename(self, path1, path2):
+        self.sftp_client.rename(path1, path2)
