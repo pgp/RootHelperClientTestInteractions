@@ -29,11 +29,8 @@ class FileOps(object):
         for i in range(1,len(path1)):
             if path1[i] == '/':
                 partialPath = path1[:i]
-                print(f'Creating partial path: {partialPath}')
-                if exist_ok:
-                    if self.existsIsFileIsDir(partialPath) != 2:
-                        self.mkdir(partialPath) # make it fail if a non-dir exists
-                else:
+                if (exist_ok and self.existsIsFileIsDir(partialPath) != 2) or (not exist_ok):
+                    print(f'Creating partial path: {partialPath}')
                     self.mkdir(partialPath)
 
     def rmpath(self, path):
