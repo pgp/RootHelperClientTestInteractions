@@ -20,7 +20,7 @@ class FileOps(object):
         except:
             return -1  # access error or anything else
 
-    def mkpath(self, path):
+    def mkpath(self, path, exist_ok=True):
         if path in {'.', '/'}: # current dir and root always exist
             return
 
@@ -30,11 +30,11 @@ class FileOps(object):
             if path1[i] == '/':
                 partialPath = path1[:i]
                 print(f'Creating partial path: {partialPath}')
-                try:
-                    self.mkdir(partialPath)
-                except FileExistsError:
+                if exist_ok:
                     if self.existsIsFileIsDir(partialPath) != 2:
-                        raise
+                        self.mkdir(partialPath) # make it fail if a non-dir exists
+                else:
+                    self.mkdir(partialPath)
 
     def rmpath(self, path):
         """
@@ -111,8 +111,8 @@ class FileOps(object):
 
 class LocalFileOps(FileOps):
 
-    def mkpath(self, path):
-        os.makedirs(path, exist_ok=True)
+    def mkpath(self, path, exist_ok=True):
+        os.makedirs(path, exist_ok=exist_ok)
 
     def rmpath(self, path):
         try:
