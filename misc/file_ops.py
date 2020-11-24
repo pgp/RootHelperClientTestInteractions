@@ -175,7 +175,7 @@ def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
     o1.mkpath(local_dir)
     o2.mkpath(remote_dir)
 
-    # stack of (filename, local_relpath_including_base_dir, remote_relpath_including_remote_dir)
+    # stack of (local_relpath_including_base_dir, remote_relpath_including_remote_dir)
     S =  [(local_dir, remote_dir)]
 
     while S:
@@ -185,7 +185,22 @@ def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
             p1 = relpath
             p2 = remote_relpath
             o2.mkpath(os.path.dirname(p2))
-            print(f'Uploading local file {p1} to remote path {p2}')
-            sftp.put(p1, p2) # TODO upload only if modification time of p1 > modification time of p2
+            # upload only if modification time of p1 > modification time of p2
+            try:
+                tmp = o2.stat(p2)
+                remote_times = (int(tmp.st_atime), int(tmp.st_mtime))
+            except:
+                # assume remote file not existing
+                remote_times = (0,0)
+            tmp = o1.stat(p1)
+            local_times = (int(tmp.st_atime), int(tmp.st_mtime))
+            local_mtime = local_times[1]
+            remote_mtime = remote_times[1]
+            if local_mtime > remote_mtime:
+                print(f"Updating remote path {p2} with mtime {remote_mtime} from local path {p1} with mtime {local_mtime}")
+                sftp.put(p1,p2)
+                sftp.utime(p2, local_times)
+            else:
+                print(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
         elif efd == 2:
             S.extend(((os.path.join(relpath, filename)),(os.path.join(remote_relpath, filename))) for filename in o1.listdir(relpath))
