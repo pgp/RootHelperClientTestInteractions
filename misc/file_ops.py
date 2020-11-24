@@ -6,6 +6,51 @@ from typing import List, Tuple
 
 import paramiko
 
+class bcolors:
+    CYAN = b'\033[96m'
+    PINK = b'\033[95m'
+    BLUE = b'\033[94m'
+    GREEN = b'\033[92m'
+    YELLOW = b'\033[93m'
+    RED = b'\033[91m'
+    BROWN = b'\033[90m'
+    ENDC = b'\033[0m'
+    BOLD = b'\033[1m'
+    UNDERLINE = b'\033[4m'
+
+
+class ColorLogger(object):
+    def __init__(self, color=None, logger_prefix=None):
+        self.bcstart = b''
+        self.bcend = b''
+        self.logger_prefix = b'' if logger_prefix is None else (str(logger_prefix)+": ").encode('utf-8')
+        if color is None:
+            pass
+        elif color == 1 or str(color).lower() == 'blue':
+            self.bcstart = bcolors.BLUE
+        elif color == 2 or str(color).lower() == 'green':
+            self.bcstart = bcolors.GREEN
+        elif color == 3 or str(color).lower() == 'red':
+            self.bcstart = bcolors.RED
+        elif color == 4 or str(color).lower() == 'yellow':
+            self.bcstart = bcolors.YELLOW
+        elif color == 5 or str(color).lower() == 'cyan':
+            self.bcstart = bcolors.CYAN
+        elif color == 6 or str(color).lower() == 'pink':
+            self.bcstart = bcolors.PINK
+        elif color == 7 or str(color).lower() == 'brown':
+            self.bcstart = bcolors.BROWN
+        if self.bcstart != '':
+            self.bcend = bcolors.ENDC
+
+    def log(self, *args):
+        os.write(1,
+                 self.bcstart +
+                 self.logger_prefix +
+                 (''.join([str(_) for _ in args])).encode('utf-8') +
+                 b'\n' +
+                 self.bcend)
+
 
 class FileOps(object):
     __metaclass__ = abc.ABCMeta
@@ -165,9 +210,54 @@ class SftpFileOps(FileOps):
         self.sftp_client.posix_rename(path1, path2)
 
 
+def create_sftp_client2(host, port, username, password, keyfilepath, keyfiletype):
+    """
+    create_sftp_client(host, port, username, password, keyfilepath, keyfiletype) -> SFTPClient
+
+    Creates a SFTP client connected to the supplied host on the supplied port authenticating as the user with
+    supplied username and supplied password or with the private key in a file with the supplied path.
+    If a private key is used for authentication, the type of the keyfile needs to be specified as DSA or RSA.
+    :rtype: SFTPClient object.
+    """
+    ssh = None
+    sftp = None
+    key = None
+    try:
+        if keyfilepath is not None:
+            # Get private key used to authenticate user.
+            if keyfiletype == 'DSA':
+                # The private key is a DSA type key.
+                key = paramiko.DSSKey.from_private_key_file(keyfilepath)
+            else:
+                # The private key is a RSA type key.
+                key = paramiko.RSAKey.from_private_key(keyfilepath)
+
+        # Connect SSH client accepting all host keys.
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(host, port, username, password, key)
+
+        # Using the SSH client, create a SFTP client.
+        sftp = ssh.open_sftp()
+        # Keep a reference to the SSH client in the SFTP client as to prevent the former from
+        # being garbage collected and the connection from being closed.
+        sftp.sshclient = ssh
+
+        return sftp
+    except Exception as e:
+        print('An error occurred creating SFTP client: %s: %s' % (e.__class__, e))
+        if sftp is not None:
+            sftp.close()
+        if ssh is not None:
+            ssh.close()
+
+
 def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
     """Synchronizes local_dir towards remote_dir (i.e. files in remote_dir
     not in local_dir won't be copied to local_dir)"""
+    log = ColorLogger('blue')
+    warn = ColorLogger('yellow')
+
     o1 = LocalFileOps()
     o2 = SftpFileOps(sftp)
 
@@ -197,10 +287,10 @@ def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
             local_mtime = local_times[1]
             remote_mtime = remote_times[1]
             if local_mtime > remote_mtime:
-                print(f"Updating remote path {p2} with mtime {remote_mtime} from local path {p1} with mtime {local_mtime}")
+                log.log(f"Updating remote path {p2} with mtime {remote_mtime} from local path {p1} with mtime {local_mtime}")
                 sftp.put(p1,p2)
                 sftp.utime(p2, local_times)
             else:
-                print(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
+                warn.log(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
         elif efd == 2:
             S.extend(((os.path.join(relpath, filename)),(os.path.join(remote_relpath, filename))) for filename in o1.listdir(relpath))
