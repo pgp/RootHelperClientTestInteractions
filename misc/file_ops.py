@@ -305,6 +305,13 @@ def create_sftp_client2(host, port, username, password, keyfilepath, keyfiletype
             ssh.close()
 
 
+def pathConcat(base_path, sub_path, sep=None):
+    joined_path = os.path.join(base_path, sub_path)
+    if sep:
+        joined_path = joined_path.replace('\\', sep).replace('/',sep)
+    return joined_path
+
+
 def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
     """Synchronizes local_dir towards remote_dir (i.e. files in remote_dir
     not in local_dir won't be copied to local_dir)"""
@@ -348,4 +355,4 @@ def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
             else:
                 info(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
         elif efd == 2:
-            S.extend(((os.path.join(relpath, filename)),(os.path.join(remote_relpath, filename))) for filename in o1.listdir(relpath))
+            S.extend(((pathConcat(relpath, filename, '/')),(pathConcat(remote_relpath, filename, '/'))) for filename in o1.listdir(relpath))
