@@ -1,5 +1,4 @@
 import abc
-import logging
 import os
 import shutil
 import stat
@@ -44,6 +43,9 @@ class ColorLogger(object):
         if self.bcstart != '':
             self.bcend = bcolors.ENDC
 
+        if not os.isatty(1): # prevent outputting ANSI color escape sequences when using output redirection
+            self.log = self.logpipe
+
     def log(self, *args):
         os.write(1,
                  self.bcstart +
@@ -51,6 +53,11 @@ class ColorLogger(object):
                  (''.join([str(_) for _ in args])).encode('utf-8') +
                  b'\n' +
                  self.bcend)
+
+    def logpipe(self, *args):
+        os.write(1,
+                 self.logger_prefix +
+                 (''.join([str(_) for _ in args])).encode('utf-8') + b'\n')
 
 
 class FileOps(object):
@@ -256,19 +263,10 @@ def create_sftp_client2(host, port, username, password, keyfilepath, keyfiletype
 def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
     """Synchronizes local_dir towards remote_dir (i.e. files in remote_dir
     not in local_dir won't be copied to local_dir)"""
-    try:
-        if int(os.environ['COLORED']) != 0:
-            log_ = ColorLogger('blue')
-            warn_ = ColorLogger('yellow')
-            log = log_.log
-            warn = warn_.log
-        else:
-            raise BaseException
-    except:
-        logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger()
-        log = logger.info
-        warn = logger.warning
+    info_ = ColorLogger('blue')
+    warn_ = ColorLogger('yellow')
+    info = info_.log
+    warn = warn_.log
 
     o1 = LocalFileOps()
     o2 = SftpFileOps(sftp)
@@ -299,10 +297,10 @@ def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
             local_mtime = local_times[1]
             remote_mtime = remote_times[1]
             if local_mtime > remote_mtime:
-                log(f"Updating remote path {p2} with mtime {remote_mtime} from local path {p1} with mtime {local_mtime}")
+                warn(f"Updating remote path {p2} with mtime {remote_mtime} from local path {p1} with mtime {local_mtime}")
                 sftp.put(p1,p2)
                 sftp.utime(p2, local_times)
             else:
-                warn(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
+                info(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
         elif efd == 2:
             S.extend(((os.path.join(relpath, filename)),(os.path.join(remote_relpath, filename))) for filename in o1.listdir(relpath))
