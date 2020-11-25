@@ -1,8 +1,15 @@
 import abc
 import os
+import platform
 import shutil
 import stat
 from typing import List, Tuple
+
+try:
+    import colorama
+    COLORAMA_AVAILABLE = True
+except ModuleNotFoundError:
+    COLORAMA_AVAILABLE = False
 
 import paramiko
 
@@ -17,6 +24,39 @@ class bcolors:
     ENDC = b'\033[0m'
     BOLD = b'\033[1m'
     UNDERLINE = b'\033[4m'
+
+
+class ColoramaLogger(object):
+    initialized = colorama.init() if COLORAMA_AVAILABLE else None
+
+    def __init__(self, color=None, logger_prefix=None):
+        self.bcstart = ''
+        self.bcend = ''
+        self.logger_prefix = '' if logger_prefix is None else (str(logger_prefix)+": ")
+        if color is None:
+            pass
+        elif color == 1 or str(color).lower() == 'blue':
+            self.bcstart = colorama.Fore.BLUE
+        elif color == 2 or str(color).lower() == 'green':
+            self.bcstart = colorama.Fore.GREEN
+        elif color == 3 or str(color).lower() == 'red':
+            self.bcstart = colorama.Fore.RED
+        elif color == 4 or str(color).lower() == 'yellow':
+            self.bcstart = colorama.Fore.YELLOW
+        elif color == 5 or str(color).lower() == 'cyan':
+            self.bcstart = colorama.Fore.CYAN
+        elif color == 6 or str(color).lower() == 'pink':
+            self.bcstart = colorama.Fore.PINK
+        elif color == 7 or str(color).lower() == 'brown':
+            self.bcstart = colorama.Fore.BROWN
+        if self.bcstart != '':
+            self.bcend = colorama.Style.RESET_ALL
+
+    def log(self, *args):
+        print(self.bcstart +
+              self.logger_prefix +
+              (''.join([str(_) for _ in args])) +
+              self.bcend)
 
 
 class ColorLogger(object):
@@ -43,7 +83,8 @@ class ColorLogger(object):
         if self.bcstart != '':
             self.bcend = bcolors.ENDC
 
-        if not os.isatty(1): # prevent outputting ANSI color escape sequences when using output redirection
+        # prevent outputting ANSI color escape sequences on Windows, or when using output redirection
+        if (not os.isatty(1)) or platform.uname()[0].lower().startswith('win'):
             self.log = self.logpipe
 
     def log(self, *args):
@@ -58,6 +99,10 @@ class ColorLogger(object):
         os.write(1,
                  self.logger_prefix +
                  (''.join([str(_) for _ in args])).encode('utf-8') + b'\n')
+
+    @staticmethod
+    def getLogger(color=None, logger_prefix=None):
+        return ColoramaLogger(color, logger_prefix) if COLORAMA_AVAILABLE else ColorLogger(color, logger_prefix)
 
 
 class FileOps(object):
@@ -263,8 +308,8 @@ def create_sftp_client2(host, port, username, password, keyfilepath, keyfiletype
 def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
     """Synchronizes local_dir towards remote_dir (i.e. files in remote_dir
     not in local_dir won't be copied to local_dir)"""
-    info_ = ColorLogger('blue')
-    warn_ = ColorLogger('yellow')
+    info_ = ColorLogger.getLogger('blue')
+    warn_ = ColorLogger.getLogger('yellow')
     info = info_.log
     warn = warn_.log
 
