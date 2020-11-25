@@ -1,4 +1,5 @@
 import abc
+import logging
 import os
 import shutil
 import stat
@@ -255,8 +256,19 @@ def create_sftp_client2(host, port, username, password, keyfilepath, keyfiletype
 def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
     """Synchronizes local_dir towards remote_dir (i.e. files in remote_dir
     not in local_dir won't be copied to local_dir)"""
-    log = ColorLogger('blue')
-    warn = ColorLogger('yellow')
+    try:
+        if int(os.environ['COLORED']) != 0:
+            log_ = ColorLogger('blue')
+            warn_ = ColorLogger('yellow')
+            log = log_.log
+            warn = warn_.log
+        else:
+            raise BaseException
+    except:
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger()
+        log = logger.info
+        warn = logger.warning
 
     o1 = LocalFileOps()
     o2 = SftpFileOps(sftp)
@@ -287,10 +299,10 @@ def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
             local_mtime = local_times[1]
             remote_mtime = remote_times[1]
             if local_mtime > remote_mtime:
-                log.log(f"Updating remote path {p2} with mtime {remote_mtime} from local path {p1} with mtime {local_mtime}")
+                log(f"Updating remote path {p2} with mtime {remote_mtime} from local path {p1} with mtime {local_mtime}")
                 sftp.put(p1,p2)
                 sftp.utime(p2, local_times)
             else:
-                warn.log(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
+                warn(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
         elif efd == 2:
             S.extend(((os.path.join(relpath, filename)),(os.path.join(remote_relpath, filename))) for filename in o1.listdir(relpath))
