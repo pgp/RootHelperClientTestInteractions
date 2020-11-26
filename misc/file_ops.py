@@ -4,6 +4,7 @@ import platform
 import shutil
 import stat
 from typing import List, Tuple
+import paramiko
 
 try:
     import colorama
@@ -11,46 +12,27 @@ try:
 except ModuleNotFoundError:
     COLORAMA_AVAILABLE = False
 
-import paramiko
-
-class bcolors:
-    CYAN = b'\033[96m'
-    PINK = b'\033[95m'
-    BLUE = b'\033[94m'
-    GREEN = b'\033[92m'
-    YELLOW = b'\033[93m'
-    RED = b'\033[91m'
-    BROWN = b'\033[90m'
-    ENDC = b'\033[0m'
-    BOLD = b'\033[1m'
-    UNDERLINE = b'\033[4m'
-
 
 class ColoramaLogger(object):
     initialized = colorama.init() if COLORAMA_AVAILABLE else None
+    COLORS = {
+        'CYAN': colorama.Fore.CYAN,
+        'PINK': colorama.Fore.MAGENTA,
+        'BLUE': colorama.Fore.BLUE,
+        'GREEN': colorama.Fore.GREEN,
+        'YELLOW': colorama.Fore.YELLOW,
+        'RED': colorama.Fore.RED,
+        'ENDC': colorama.Style.RESET_ALL
+    }
 
     def __init__(self, color=None, logger_prefix=None):
         self.bcstart = ''
         self.bcend = ''
         self.logger_prefix = '' if logger_prefix is None else (str(logger_prefix)+": ")
-        if color is None:
-            pass
-        elif color == 1 or str(color).lower() == 'blue':
-            self.bcstart = colorama.Fore.BLUE
-        elif color == 2 or str(color).lower() == 'green':
-            self.bcstart = colorama.Fore.GREEN
-        elif color == 3 or str(color).lower() == 'red':
-            self.bcstart = colorama.Fore.RED
-        elif color == 4 or str(color).lower() == 'yellow':
-            self.bcstart = colorama.Fore.YELLOW
-        elif color == 5 or str(color).lower() == 'cyan':
-            self.bcstart = colorama.Fore.CYAN
-        elif color == 6 or str(color).lower() == 'pink':
-            self.bcstart = colorama.Fore.PINK
-        elif color == 7 or str(color).lower() == 'brown':
-            self.bcstart = colorama.Fore.BROWN
+        if color is not None:
+            self.bcstart = self.COLORS[color.upper()]
         if self.bcstart != '':
-            self.bcend = colorama.Style.RESET_ALL
+            self.bcend = self.COLORS['ENDC']
 
     def log(self, *args):
         print(self.bcstart +
@@ -60,28 +42,27 @@ class ColoramaLogger(object):
 
 
 class ColorLogger(object):
+    COLORS = {
+        'CYAN': b'\033[96m',
+        'PINK': b'\033[95m',
+        'BLUE': b'\033[94m',
+        'GREEN': b'\033[92m',
+        'YELLOW': b'\033[93m',
+        'RED': b'\033[91m',
+        'BROWN': b'\033[90m',
+        'ENDC': b'\033[0m',
+        'BOLD': b'\033[1m',
+        'UNDERLINE': b'\033[4m'
+    }
+
     def __init__(self, color=None, logger_prefix=None):
         self.bcstart = b''
         self.bcend = b''
         self.logger_prefix = b'' if logger_prefix is None else (str(logger_prefix)+": ").encode('utf-8')
-        if color is None:
-            pass
-        elif color == 1 or str(color).lower() == 'blue':
-            self.bcstart = bcolors.BLUE
-        elif color == 2 or str(color).lower() == 'green':
-            self.bcstart = bcolors.GREEN
-        elif color == 3 or str(color).lower() == 'red':
-            self.bcstart = bcolors.RED
-        elif color == 4 or str(color).lower() == 'yellow':
-            self.bcstart = bcolors.YELLOW
-        elif color == 5 or str(color).lower() == 'cyan':
-            self.bcstart = bcolors.CYAN
-        elif color == 6 or str(color).lower() == 'pink':
-            self.bcstart = bcolors.PINK
-        elif color == 7 or str(color).lower() == 'brown':
-            self.bcstart = bcolors.BROWN
+        if color is not None:
+            self.bcstart = self.COLORS[color.upper()]
         if self.bcstart != '':
-            self.bcend = bcolors.ENDC
+            self.bcend = self.COLORS['ENDC']
 
         # prevent outputting ANSI color escape sequences on Windows, or when using output redirection
         if (not os.isatty(1)) or platform.uname()[0].lower().startswith('win'):
