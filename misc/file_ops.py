@@ -9,36 +9,37 @@ import paramiko
 try:
     import colorama
     COLORAMA_AVAILABLE = True
+
+
+    class ColoramaLogger(object):
+        initialized = colorama.init()
+        COLORS = {
+            'CYAN': colorama.Fore.CYAN,
+            'PINK': colorama.Fore.MAGENTA,
+            'BLUE': colorama.Fore.BLUE,
+            'GREEN': colorama.Fore.GREEN,
+            'YELLOW': colorama.Fore.YELLOW,
+            'RED': colorama.Fore.RED,
+            'ENDC': colorama.Style.RESET_ALL
+        }
+
+        def __init__(self, color=None, logger_prefix=None):
+            self.bcstart = ''
+            self.bcend = ''
+            self.logger_prefix = '' if logger_prefix is None else (str(logger_prefix) + ": ")
+            if color is not None:
+                self.bcstart = self.COLORS[color.upper()]
+            if self.bcstart != '':
+                self.bcend = self.COLORS['ENDC']
+
+        def log(self, *args):
+            print(self.bcstart +
+                  self.logger_prefix +
+                  (''.join([str(_) for _ in args])) +
+                  self.bcend)
+
 except ModuleNotFoundError:
     COLORAMA_AVAILABLE = False
-
-
-class ColoramaLogger(object):
-    initialized = colorama.init() if COLORAMA_AVAILABLE else None
-    COLORS = {
-        'CYAN': colorama.Fore.CYAN,
-        'PINK': colorama.Fore.MAGENTA,
-        'BLUE': colorama.Fore.BLUE,
-        'GREEN': colorama.Fore.GREEN,
-        'YELLOW': colorama.Fore.YELLOW,
-        'RED': colorama.Fore.RED,
-        'ENDC': colorama.Style.RESET_ALL
-    }
-
-    def __init__(self, color=None, logger_prefix=None):
-        self.bcstart = ''
-        self.bcend = ''
-        self.logger_prefix = '' if logger_prefix is None else (str(logger_prefix)+": ")
-        if color is not None:
-            self.bcstart = self.COLORS[color.upper()]
-        if self.bcstart != '':
-            self.bcend = self.COLORS['ENDC']
-
-    def log(self, *args):
-        print(self.bcstart +
-              self.logger_prefix +
-              (''.join([str(_) for _ in args])) +
-              self.bcend)
 
 
 class ColorLogger(object):
