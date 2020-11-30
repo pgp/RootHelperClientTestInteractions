@@ -38,7 +38,7 @@ try:
                   (''.join([str(_) for _ in args])) +
                   self.bcend)
 
-except ModuleNotFoundError:
+except ImportError:
     COLORAMA_AVAILABLE = False
 
 
@@ -338,3 +338,8 @@ def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):
                 info(f"Won't update remote path {p2} with mtime {remote_mtime}, equal or more recent than local path {p1} with mtime {local_mtime}")
         elif efd == 2:
             S.extend(((pathConcat(relpath, filename, '/')),(pathConcat(remote_relpath, filename, '/'))) for filename in o1.listdir(relpath))
+
+
+if __name__ == '__main__':
+    s = create_sftp_client2('192.168.70.76', 22, 'effetipi', 'effetipi', None, None)
+    sftp_sync('/media/pgp/Dati/m19/sdcard_mint19/apks', s, 'zzztest3')
