@@ -8,7 +8,6 @@ import paramiko
 
 try:
     import colorama
-    COLORAMA_AVAILABLE = True
 
 
     class ColoramaLogger(object):
@@ -39,7 +38,7 @@ try:
                   self.bcend)
 
 except ImportError:
-    COLORAMA_AVAILABLE = False
+    colorama = None
 
 
 class ColorLogger(object):
@@ -84,7 +83,7 @@ class ColorLogger(object):
 
     @staticmethod
     def getLogger(color=None, logger_prefix=None):
-        return ColoramaLogger(color, logger_prefix) if COLORAMA_AVAILABLE else ColorLogger(color, logger_prefix)
+        return ColoramaLogger(color, logger_prefix) if colorama else ColorLogger(color, logger_prefix)
 
 
 class FileOps(object):

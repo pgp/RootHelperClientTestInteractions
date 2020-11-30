@@ -12,15 +12,14 @@ try:
         logging.ERROR: colorama.Fore.RED,
         'ENDC': colorama.Style.RESET_ALL
     }
-    COLORAMA_AVAILABLE = True
 except:
+    colorama = None
     defaultColorMap = {
         logging.INFO: '\033[94m',  # blue
         logging.WARNING: '\033[93m',  # yellow
         logging.ERROR: '\033[91m',  # red
         'ENDC': '\033[0m',
     }
-    COLORAMA_AVAILABLE = False
 
 
 def colored_info(logger, msg, *args, **kwargs):
@@ -41,7 +40,7 @@ class ColoredLogging:
     def patchLogger(baseLogger: logging.Logger, colormap=None):
         colormap = colormap if colormap is not None else defaultColorMap
 
-        if (not COLORAMA_AVAILABLE) and platform.uname()[0].lower().startswith('win'):
+        if (not colorama) and platform.uname()[0].lower().startswith('win'):
             return
 
         baseLogger.infoColor = colormap[logging.INFO]
