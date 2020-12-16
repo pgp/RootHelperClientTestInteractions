@@ -48,8 +48,10 @@ def ls_archive(src_archive_path, password=None):
     sock.close()
 
 
-def extract_archive_with_progress(src_archive_path, dest_folder_path, indexListOrEntireContent=None, password=None, smartDirectoryCreation=False):
+def extract_archive_with_progress(src_archive_path, dest_folder_path=None, indexListOrEntireContent=None, password=None, smartDirectoryCreation=False):
     sock = get_connected_local_socket()
+    if dest_folder_path is None: # empty path indicates test mode
+        dest_folder_path = ""
 
     rq = bytearray([ord(b'\x07') ^ ((6 if smartDirectoryCreation else 7) << 5)])
 
@@ -96,7 +98,7 @@ def extract_archive_with_progress(src_archive_path, dest_folder_path, indexListO
         print("Received progress: ", progress)
         if progress == maxuint64:  # end of compression
             if last_progress == total:  # OK
-                print("Extract OK")
+                print("Extract/Test ended")
             else:
                 print("Warning, last progress before termination value differs from total")
             break
@@ -110,6 +112,12 @@ def extract_archive_with_progress(src_archive_path, dest_folder_path, indexListO
         print("OK response received")
     sock.close()
 
+def test_archive_with_progress(src_archive_path, indexListOrEntireContent=None, password=None):
+    return extract_archive_with_progress(src_archive_path=src_archive_path,
+                                         dest_folder_path=None,
+                                         indexListOrEntireContent=indexListOrEntireContent,
+                                         password=password,
+                                         smartDirectoryCreation=False)
 
 if __name__ == "__main__":
     # archive_path = '/sdcard/BIGFILES_TEST/special/winUtf.7z'  # decode to latin-1
@@ -178,6 +186,9 @@ if __name__ == "__main__":
     extract_archive_with_progress(src_archive_path='/sdcard/1.7z',
                                   dest_folder_path='/sdcard/tttExtracted',
                                   smartDirectoryCreation=True)
+
+    #test_archive_with_progress(src_archive_path='/sdcard/1.7z')
+    #test_archive_with_progress(src_archive_path='/sdcard/2.7z', password='qwerty')
 
     # extract_archive_with_progress(src_archive_path=archive_path,
     #                      dest_folder_path='/sdcard/BIGFILES_TEST/encExtracted',
