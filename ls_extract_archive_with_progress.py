@@ -51,7 +51,7 @@ def ls_archive(src_archive_path, password=None):
 def extract_archive_with_progress(src_archive_path, dest_folder_path, indexListOrEntireContent=None, password=None, smartDirectoryCreation=False):
     sock = get_connected_local_socket()
 
-    rq = bytearray([ord(b'\x07') ^ ((6 if smartDirectoryCreation else 0) << 5)])
+    rq = bytearray([ord(b'\x07') ^ ((6 if smartDirectoryCreation else 7) << 5)])
 
     sock.sendall(rq)
     src_archive_path, dest_folder_path = encodeString(src_archive_path),encodeString(dest_folder_path)
