@@ -7,9 +7,9 @@ from datetime import datetime
 str1 = "\0theroothelper"
 
 class IndexListForRelativeExtract:
-    def __init__(self,stripPathLen=0,indexList=list()):
+    def __init__(self,stripPathLen=0,indexList=None):
         self.stripPathLen = stripPathLen
-        self.indexList = indexList
+        self.indexList = [] if indexList is None else indexList
 
 def ls_archive(src_archive_path, password=None):
     sock = get_connected_local_socket()
