@@ -189,6 +189,8 @@ if __name__ == "__main__":
 
     #test_archive_with_progress(src_archive_path='/sdcard/1.7z')
     #test_archive_with_progress(src_archive_path='/sdcard/2.7z', password='qwerty')
+    #test_archive_with_progress(src_archive_path='/sdcard/00select/123_3.7z',
+    #                           indexListOrEntireContent=IndexListForRelativeExtract(indexList=[0,1,2]))
 
     # extract_archive_with_progress(src_archive_path=archive_path,
     #                      dest_folder_path='/sdcard/BIGFILES_TEST/encExtracted',
