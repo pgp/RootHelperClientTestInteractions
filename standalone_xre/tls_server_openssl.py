@@ -1,4 +1,9 @@
 from __future__ import print_function
+import sys
+import os
+if not ('..' in sys.path or os.path.realpath('..') in sys.path): sys.path.append(os.path.realpath('..'))
+if not ('.' in sys.path or os.path.realpath('.') in sys.path): sys.path.append(os.path.realpath('.'))
+from net_common import *
 from xre_common import *
 from sslmasterkey import get_ssl_master_key
 
@@ -7,7 +12,7 @@ This is a python implementation of the XFiles Remote Explorer (XRE) server-side 
 The TLS channel is established using python's openssl native bindings.
 The TLS session master secret for end-to-end verification is extracted by looking up in the native C structures
 (see sslmasterkey.py; with this feature enabled, it works on any well known OS - Windows,OSX,Linux,BSD - with Python 3 and OpenSSL 1.1 bindings;
-commenting the relevant code lines should make it work also with Pyhton 2.7, and with OpenSSL 1.0 bindings)
+commenting the relevant code lines should make it work also with Python 2.7, and with OpenSSL 1.0 bindings)
 """
 
 def xre_server_session_wrapper(conn):

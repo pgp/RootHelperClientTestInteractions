@@ -1,6 +1,6 @@
 from __future__ import print_function
 import platform
-from socket import *
+import socket
 import errno
 import os
 
@@ -32,7 +32,7 @@ def get_connected_local_socket(pathname="theroothelper"):
         raise OSError("Unsupported local sockets on Windows OS")
     else: # apple and bsd
         str1 = "/tmp/"+pathname
-    sock = socket(AF_UNIX, SOCK_STREAM)
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(str1)
     return sock
 

@@ -1,7 +1,8 @@
 from __future__ import print_function
 import sys
-if '.' not in sys.path: sys.path.append('.')
-if '..' not in sys.path: sys.path.append('..')
+import os
+if not ('.' in sys.path or os.path.realpath('.') in sys.path): sys.path.append(os.path.realpath('.'))
+if not ('..' in sys.path or os.path.realpath('..') in sys.path): sys.path.append(os.path.realpath('..'))
 from rhioutils import *
 
 try:
@@ -37,7 +38,7 @@ web source: https://stackoverflow.com/questions/905189/why-does-sys-exit-not-exi
 
 def OSUploadRegularFileWithProgress(srcPath, destPath, fileInfo, conn):
     thisFileSize = fileInfo.st_size
-    f = open(srcPath, 'rb')
+    f = open(srcPath, 'rb') # TODO use try finally or with clause
     print("File size for upload is:", thisFileSize)
     write_fileitem_sock_t(conn, (b'\x00', destPath, thisFileSize))
 
@@ -132,6 +133,76 @@ def write_fileitem_sock_t(conn, item):
     conn.sendall(struct.pack('@Q', item[2]))  # size (8 byte)
 
 
+class ItemWithContent(object):
+    def __init__(self, rpath: str, wpath: str) -> None:
+        self.isDir = os.path.isdir(rpath)
+        if not self.isDir:
+            self.flag = b'\x00'
+            self.size = os.stat(rpath).st_size
+        else:
+            self.flag = b'\x01'
+            self.size = 0
+        self.rpath = rpath
+        self.wpath = wpath
+
+    @staticmethod
+    def eol(conn):
+        conn.sendall(b'\xFF')
+
+    @staticmethod
+    def read(conn):
+        flag = conn.read(1)
+        if flag == b'\x00':
+            wpath = receiveStringWithLen(conn)
+            size = struct.unpack("@Q", conn.recv(8))[0]
+            print('Receiving file', wpath, 'of size', size)
+            assert size > 0
+            chunkSize = 1024
+            remaining = size
+            currentProgress = 0
+            lastProgress = 0
+            with open(wpath, 'wb') as g:
+                while True:
+                    readBytes = conn.read(min(chunkSize, remaining))
+                    if not readBytes:
+                        raise ConnectionError('Connection closed while downloading')
+                    g.write(readBytes)
+                    remaining -= len(readBytes)
+                    currentProgress += len(readBytes)
+                    if currentProgress - lastProgress > 1000000:
+                        print('Received', currentProgress, 'bytes for file', wpath)
+                        lastProgress = currentProgress
+                    if remaining < 0:
+                        raise ValueError('Out of bounds reading bytes')
+                    if remaining == 0:
+                        break
+        elif flag == b'\x01':
+            wpath = receiveStringWithLen(conn)
+            print('directory',wpath)
+        elif flag == b'\xFF':
+            print('End of files')
+        else:
+            raise ValueError('Invalid flag byte for ItemWithContent')
+
+    def write(self, conn):
+        currentProgress = 0
+        lastProgress = 0
+        conn.sendall(self.flag)  # flag (1 byte)
+        sendStringWithLen(conn, windowsToUnixPath(self.wpath))  # filepath as string
+        if not self.isDir:  # regular file
+            print('Sending', self.rpath, 'of size', self.size)
+            conn.sendall(struct.pack('@Q', self.size))  # size (8 byte)
+            # send file content
+            with open(self.rpath, 'rb') as f:
+                while True:
+                    readBytes = f.read(REMOTE_IO_CHUNK_SIZE)
+                    if not readBytes: break
+                    conn.sendall(readBytes)
+                    currentProgress += len(readBytes)
+                    if currentProgress - lastProgress > 1000000:
+                        lastProgress = currentProgress
+                        print('Sent', len(readBytes), 'bytes for file', self.rpath, 'progress:', currentProgress)
+
 #############################################################
 
 def receiveStringWithLen(conn):
@@ -218,6 +289,7 @@ def stats(conn, rqflags):
     raise BaseException('STATS NOT IMPLEMENTED')
 
 
+# server handles client download request, i.e. server uploads to client
 def server_download(conn, rqflagsunused):
     v = receivePathPairsList(conn)
     descendantCountMap = vdict()
