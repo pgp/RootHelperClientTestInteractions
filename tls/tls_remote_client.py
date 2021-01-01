@@ -1,10 +1,11 @@
+from __future__ import print_function
 import struct
 from datetime import datetime
 import sys
-if not '..' in sys.path: sys.path.append('..')
+import os
+if not ('..' in sys.path or os.path.realpath('..') in sys.path): sys.path.append(os.path.realpath('..'))
 from net_common import *
 from time import sleep
-import sys
 
 def create_file_or_dir(sock, path, mkdir=True):
 	# rq = chr(ord('\x09') ^ ((0<<5) if mkdir else (1<<5))) # python 2 only

@@ -1,9 +1,10 @@
+from __future__ import print_function
 import struct
 from datetime import datetime
 import sys
-if not '..' in sys.path: sys.path.append('..')
+import os
+if not ('..' in sys.path or os.path.realpath('..') in sys.path): sys.path.append(os.path.realpath('..'))
 from net_common import *
-import sys
 import subprocess
 from time import sleep
 

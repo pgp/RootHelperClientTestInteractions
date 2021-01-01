@@ -1,4 +1,5 @@
 from __future__ import print_function
+import platform
 from socket import *
 import errno
 import os
@@ -24,7 +25,7 @@ def encodeString(s):
     return bytearray(s.encode('utf-8'))
 
 def get_connected_local_socket(pathname="theroothelper"):
-    o = os.uname()[0].lower()
+    o = platform.uname()[0].lower()
     if 'linux' in o:
         str1 = "\0" + pathname
     elif 'darwin' not in o and 'win' in o:

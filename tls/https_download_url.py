@@ -1,7 +1,7 @@
 import struct
 import sys
-
-if not '..' in sys.path: sys.path.append('..')
+import os
+if not ('..' in sys.path or os.path.realpath('..') in sys.path): sys.path.append(os.path.realpath('..'))
 from net_common import *
 from standalone_xre.xre_common import receiveStringWithLen
 import sys
