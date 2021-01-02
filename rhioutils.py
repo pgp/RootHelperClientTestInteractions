@@ -10,6 +10,7 @@ import ssl
 import struct
 import threading
 import locale
+import re
 import traceback
 try:
     from SocketServer import *
@@ -67,11 +68,23 @@ def readAllOrExit(fd, count):
         sys.exit(-234)
     return total
 
+
 def standardizeToXrePath(s_):
     if '/' in s_: # already in POSIX format, nothing to do
         return s_
     else: # possibly a windows path, try to convert it
         return windowsToUnixPath(s_, unconditional=True)
+
+
+def standardizeFromXrePath(s_):
+    if not isinstance(s_, str):
+        s_ = s_.decode('utf-8')
+    p = re.compile(r"^/[a-zA-Z]:")
+    if p.match(s_) is None:
+        return s_
+    else:
+        return unixToWindowsPath(s_, unconditional=True)
+
 
 def windowsToUnixPath(s_, unconditional=False):
     """
@@ -100,9 +113,9 @@ def windowsToUnixPath(s_, unconditional=False):
             exitWithError("Invalid string format in windowsToUnixPathEncoded, input type is "+str(type(s_)))
 
 
-def unixToWindowsPath(s_):
+def unixToWindowsPath(s_, unconditional=False):
     s = s_.decode('utf-8') if type(s_) is bytes or type(s_) is bytearray else s_
-    if os.name != 'nt': return s
+    if os.name != 'nt' and not unconditional: return s
     if s[0] != '/':
         exitWithError('Mannaggia')  # sys.exit is not enough, we are multithreaded
         return

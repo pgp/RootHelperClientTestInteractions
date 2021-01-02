@@ -52,15 +52,8 @@ DOWNLOAD = True
 def upload_or_download_items(sock, downloadOrUpload, *pathpairs):
 	rq_byte = b'\x10' if downloadOrUpload is DOWNLOAD else b'\x11'
 	sock.sendall(rq_byte)
-	for p in pathpairs:
-		pathpair = (encodeString(p[0]), encodeString(p[1]))
-		# send the two path lengths
-		sock.sendall(struct.pack("@H",len(pathpair[0])))
-		sock.sendall(struct.pack("@H", len(pathpair[1])))
-		# send the two paths
-		sock.sendall(pathpair[0])
-		sock.sendall(pathpair[1])
-	sock.sendall(bytearray([0,0,0,0])) # send end of list
+	pathpairs1 = [(encodeString(p[0]),encodeString(p[1])) for p in pathpairs]
+	sendPathPairList(pathpairs1)
 
 	# read total number of files for updating external progress
 	print("Total files:", struct.unpack("@Q", sock.recv(8))[0])

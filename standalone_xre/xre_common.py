@@ -116,6 +116,17 @@ def receivePathPairsList(conn):
     return v
 
 
+def sendPathPairList(conn, *pathpairs):
+    for pathpair in pathpairs:
+        # send the two path lengths
+        conn.sendall(struct.pack("@H", len(pathpair[0])))
+        conn.sendall(struct.pack("@H", len(pathpair[1])))
+        # send the two paths
+        conn.sendall(pathpair[0])
+        conn.sendall(pathpair[1])
+    conn.sendall(bytearray([0, 0, 0, 0]))  # send end of list
+
+
 # content of item: flag(file/dir), filepath string, size
 
 # 0: file, 1: folder, FF: end of list
@@ -150,12 +161,13 @@ class ItemWithContent(object):
         conn.sendall(b'\xFF')
 
     @staticmethod
-    def read(conn):
+    def read(conn) -> bool:
         flag = conn.read(1)
         if flag == b'\x00':
-            wpath = receiveStringWithLen(conn)
+            wpath = standardizeFromXrePath(receiveStringWithLen(conn))
             size = struct.unpack("@Q", conn.recv(8))[0]
             print('Receiving file', wpath, 'of size', size)
+            os.makedirs(os.path.dirname(wpath), exist_ok=True)
             assert size > 0
             chunkSize = 1024
             remaining = size
@@ -176,11 +188,14 @@ class ItemWithContent(object):
                         raise ValueError('Out of bounds reading bytes')
                     if remaining == 0:
                         break
+            return True
         elif flag == b'\x01':
-            wpath = receiveStringWithLen(conn)
+            wpath = standardizeFromXrePath(receiveStringWithLen(conn))
             print('directory',wpath)
+            return True
         elif flag == b'\xFF':
             print('End of files')
+            return False
         else:
             raise ValueError('Invalid flag byte for ItemWithContent')
 

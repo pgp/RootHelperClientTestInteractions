@@ -40,10 +40,18 @@ def upload_items(sock, *pathpairs):
 		ItemWithContent(p[0], p[1]).write(sock)  # send dir info (flag byte and pathname)
 	ItemWithContent.eol(sock) # send end of list
 
+
 def download_items(sock, *pathpairs):
 	rq_byte = b'\x10'
 	sock.sendall(rq_byte)
-	# TODO
+	pathpairs1 = [(standardizeToXrePath(p[0]), standardizeToXrePath(p[1])) for p in pathpairs]
+	sendPathPairList(sock, *pathpairs1)
+	totalFiles = struct.unpack("@Q", sock.recv(8))[0]
+	totalSize = struct.unpack("@Q", sock.recv(8))[0]
+
+	while ItemWithContent.read(sock):
+		pass
+
 
 if __name__ == '__main__':
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,5 +69,5 @@ if __name__ == '__main__':
 	print(pprint.pformat(tls_sock.getpeercert()))
 
 	upload_items(tls_sock, ("/sdcard/testfolder_1", "C:\\sdcard\\tf2"))
-	# upload_items(tls_sock, UPLOAD, ("/C:/sdcard/1.bin", "/C:/Temp/2.bin"))
+	# download_items(tls_sock, ("C:\\sdcard\\test", "C:\\data\\test"))
 
