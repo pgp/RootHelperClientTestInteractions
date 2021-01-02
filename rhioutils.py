@@ -67,11 +67,18 @@ def readAllOrExit(fd, count):
         sys.exit(-234)
     return total
 
+def standardizeToXrePath(s_):
+    if '/' in s_: # already in POSIX format, nothing to do
+        return s_
+    else: # possibly a windows path, try to convert it
+        return windowsToUnixPath(s_, unconditional=True)
 
-def windowsToUnixPath(s_):
+def windowsToUnixPath(s_, unconditional=False):
     """
     :param s_: string to encode or already encoded bytes for python 2,
                only string type for python 3, in order to perform path separator replacement
+    :param unconditional: when True, the conversion will be performed ignoring the host OS
+           (i.e. on a Unix OS, providing a Windows path will result in it being converted)
     :return: bytes to be sent over socket (can be str passthrough for python 2)
     """
     if unicode is not None: # python 2
@@ -83,11 +90,11 @@ def windowsToUnixPath(s_):
         else:
             exitWithError("Invalid string format in windowsToUnixPathEncoded, input type is "+str(type(s_)))
             return
-        return '/' + s.replace('\\', '/') if os.name == 'nt' else s
+        return '/' + s.replace('\\', '/') if unconditional or os.name == 'nt' else s
     else: # python 3, expect path in str format
         if type(s_) is str:
             s = s_
-            ret = '/' + s.replace('\\', '/') if os.name == 'nt' else s
+            ret = '/' + s.replace('\\', '/') if unconditional or os.name == 'nt' else s
             return ret.encode('utf-8')
         else:
             exitWithError("Invalid string format in windowsToUnixPathEncoded, input type is "+str(type(s_)))

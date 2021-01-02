@@ -1,10 +1,13 @@
 import abc
+import sys
 import os
 import platform
 import shutil
 import stat
 from typing import List, Tuple
 import paramiko
+if not ('..' in sys.path or os.path.realpath('..') in sys.path): sys.path.append(os.path.realpath('..'))
+from net_common import *
 
 try:
     import colorama
@@ -284,13 +287,6 @@ def create_sftp_client2(host, port, username, password, keyfilepath, keyfiletype
             sftp.close()
         if ssh is not None:
             ssh.close()
-
-
-def pathConcat(base_path, sub_path, sep=None):
-    joined_path = os.path.join(base_path, sub_path)
-    if sep:
-        joined_path = joined_path.replace('\\', sep).replace('/',sep)
-    return joined_path
 
 
 def sftp_sync(local_dir: str, sftp: paramiko.SFTPClient, remote_dir: str):

@@ -188,7 +188,7 @@ class ItemWithContent(object):
         currentProgress = 0
         lastProgress = 0
         conn.sendall(self.flag)  # flag (1 byte)
-        sendStringWithLen(conn, windowsToUnixPath(self.wpath))  # filepath as string
+        sendStringWithLen(conn, standardizeToXrePath(self.wpath))  # filepath as string
         if not self.isDir:  # regular file
             print('Sending', self.rpath, 'of size', self.size)
             conn.sendall(struct.pack('@Q', self.size))  # size (8 byte)
@@ -293,7 +293,7 @@ def stats(conn, rqflags):
 def server_download(conn, rqflagsunused):
     v = receivePathPairsList(conn)
     descendantCountMap = vdict()
-    counts = [0, 0]
+    counts = [0, 0, 0]
 
     for pathpair in v:
         itemTotals = countTotalStatsIntoMap(pathpair[0], descendantCountMap)

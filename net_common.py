@@ -50,3 +50,14 @@ def intFromOctalString(s):
     if s[:2] == '0o': # python 3 syntax
         s = '0'+s[2:] # python 2 syntax
     return int(s, 8)
+
+def pathConcat(base_path, sub_path, sep=None, detectSep=False):
+    if detectSep:
+        if '/' in base_path:
+            return os.path.join(base_path, sub_path).replace('\\', '/')
+        elif '\\' in base_path:
+            return os.path.join(base_path, sub_path).replace('/', '\\')
+    joined_path = os.path.join(base_path, sub_path)
+    if sep:
+        joined_path = joined_path.replace('\\', sep).replace('/',sep)
+    return joined_path
