@@ -56,6 +56,9 @@ def remote_client_url_download(serverHost="v.gd",
 
     return sock
 
+# replicate request with curl:
+# curl -O -L --http1.0 https://api.github.com/repos/pgp/XFiles/releases
+# curl -O -L --http1.0 https://api.github.com/repos/openssl/openssl/tags
 
 if __name__ == '__main__':
     # rclient = remote_client_url_download(serverHost="v.gd") # mandatory SNI
