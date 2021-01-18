@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import List
+
 from net_common import *
 import struct
 import sys
@@ -53,7 +55,7 @@ def extract_archive_with_progress(src_archive_path, dest_folder_path=None, index
     if dest_folder_path is None: # empty path indicates test mode
         dest_folder_path = ""
 
-    rq = bytearray([ord(b'\x07') ^ ((6 if smartDirectoryCreation else 7) << 5)])
+    rq = bytearray([ord(b'\x07') ^ ((6 if smartDirectoryCreation else 7) << 5)])  # 110 vs 111
 
     sock.sendall(rq)
     src_archive_path, dest_folder_path = encodeString(src_archive_path),encodeString(dest_folder_path)
@@ -118,6 +120,76 @@ def test_archive_with_progress(src_archive_path, indexListOrEntireContent=None, 
                                          indexListOrEntireContent=indexListOrEntireContent,
                                          password=password,
                                          smartDirectoryCreation=False)
+
+def extract_multi_archives_with_progress(src_archive_paths: List, dest_folder_path=None, password=None, smartDirectoryCreation=False):
+    sock = get_connected_local_socket()
+    if dest_folder_path is None:  # empty path indicates test mode
+        dest_folder_path = ""
+
+    rq = bytearray([ord(b'\x07') ^ ((2 if smartDirectoryCreation else 3) << 5)])  # 010 vs 011
+
+    sock.sendall(rq)
+
+    for x in src_archive_paths:
+        src_archive_path = encodeString(x)
+        sock.sendall(struct.pack("@H", len(src_archive_path)))  # len of path as unsigned short
+        sock.sendall(src_archive_path)
+    sock.sendall(struct.pack("@H", 0)) # eol indication
+
+    dest_folder_path = encodeString(dest_folder_path)
+    sock.sendall(struct.pack("@H", len(dest_folder_path)))  # len of path as unsigned short
+    sock.sendall(dest_folder_path)
+
+    if password is None:
+        sock.sendall(struct.pack("@B", 0))  # 1-byte password length
+    else:
+        password = encodeString(password)
+        sock.sendall(struct.pack("@B", len(password)))  # 1-byte password length
+        sock.sendall(password)
+
+    # send numOfItems 0 to indicate that all content has to be extracted
+    sock.sendall(struct.pack("@I", 0))  # numOfItems as unsigned int
+
+    for i in range(len(src_archive_paths)):
+        resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
+        if resp != b'\x00':
+            print("Error byte received, errno:", struct.unpack("@I", sock.recv(4))[0])
+            continue
+
+        last_progress = 0
+        maxuint64 = 2 ** 64 - 1
+
+        # OK means archive init has been successful, and actual compression starts now, so start receiving progress
+        print("OK response received, starting receiving progress updates...")
+        # receive total
+        total = struct.unpack("@Q", sock.recv(8))[0]  # receive as uint64_t
+        print("Received total size: ", total)
+        while True:
+            progress = sock.recv(8)
+            progress = struct.unpack("@Q", progress)[0]
+            print("Received progress: ", progress)
+            if progress == maxuint64:  # end of compression
+                if last_progress == total:  # OK
+                    print("Extract/Test ended")
+                else:
+                    print("Warning, last progress before termination value differs from total")
+                break
+            last_progress = progress
+
+        # after receiving termination progress value (-1 as uint64), receive standard ok or error response
+        resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
+        if resp != b'\x00':
+            print("Error byte received, errno:", struct.unpack("@I", sock.recv(4))[0])
+        else:
+            print("OK response received")
+
+    sock.close()
+
+def test_multi_archives_with_progress(src_archive_paths: List, password=None):
+    return extract_multi_archives_with_progress(src_archive_paths=src_archive_paths,
+                                                dest_folder_path=None,
+                                                password=password,
+                                                smartDirectoryCreation=False)
 
 if __name__ == "__main__":
     # archive_path = '/sdcard/BIGFILES_TEST/special/winUtf.7z'  # decode to latin-1
@@ -186,6 +258,8 @@ if __name__ == "__main__":
     extract_archive_with_progress(src_archive_path='/sdcard/1.7z',
                                   dest_folder_path='/sdcard/tttExtracted',
                                   smartDirectoryCreation=True)
+
+    # test_multi_archives_with_progress(src_archive_paths=['/dev/shm/1.7z', '/dev/shm/1.7z', '/dev/shm/1.7z'])
 
     #test_archive_with_progress(src_archive_path='/sdcard/1.7z')
     #test_archive_with_progress(src_archive_path='/sdcard/2.7z', password='qwerty')
