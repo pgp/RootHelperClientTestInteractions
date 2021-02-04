@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+import datetime
 import ssl
 import pprint
 import sys
@@ -53,6 +55,37 @@ def download_items(sock, *pathpairs):
 		pass
 
 
+# copied from list.py
+def loopOverContent(sock):
+	cnt = []
+	while True:
+		ll = struct.unpack("@H", sock.recv(2))[0]  # receive file entry (filename) length
+		if ll == 0: break
+		fname = sock.recv(ll).decode("utf-8")  # receive file entry (filename)
+		fdate = datetime.datetime.fromtimestamp(struct.unpack("@I", sock.recv(4))[0])
+		fperms = sock.recv(10).decode("utf-8")
+		fsize = struct.unpack("@Q", sock.recv(8))[0]
+
+		cnt.append((fname, fdate, fperms, fsize))
+		print(fname + '\t' + str(fdate) + '\t' + fperms + '\t' + str(fsize))
+	sock.close()
+
+
+def list_dir_content(sock, path):
+	rq_byte = b'\x01'
+	sock.sendall(rq_byte)
+	sendStringWithLen(sock, path.encode('utf-8'))
+
+	resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
+	if resp != b'\x00':
+		if resp == b'\x11':
+			print('Received redirect on', receiveStringWithLen(sock))
+		else:
+			print("Error byte received, errno:", struct.unpack("=i", sock.recv(4))[0])
+			sys.exit(0)
+	loopOverContent(sock)
+
+
 if __name__ == '__main__':
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -68,6 +101,7 @@ if __name__ == '__main__':
 	print(tls_sock.cipher())
 	print(pprint.pformat(tls_sock.getpeercert()))
 
-	upload_items(tls_sock, ("/sdcard/testfolder_1", "C:\\sdcard\\tf2"))
+	# upload_items(tls_sock, ("/sdcard/testfolder_1", "C:\\sdcard\\tf2"))
 	# download_items(tls_sock, ("C:\\sdcard\\test", "C:\\data\\test"))
+	list_dir_content(tls_sock, "/sdcard")
 
