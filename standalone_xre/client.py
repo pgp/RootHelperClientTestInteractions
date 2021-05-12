@@ -91,9 +91,7 @@ if __name__ == '__main__':
 
 	# Require a certificate from the server. We used a self-signed certificate
 	# so here ca_certs must be the server certificate itself.
-	tls_sock = ssl.wrap_socket(s,
-							   ca_certs="dummycrt.pem",
-							   cert_reqs=ssl.CERT_REQUIRED)
+	tls_sock = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
 
 	tls_sock.connect(('10.0.2.2', 11111))
 
