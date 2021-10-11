@@ -85,10 +85,10 @@ class find_resp_t:
     #     self.contentAround = contentAround
     #     self.offset = offset
 
-def find_names_with_ls_resp_t(basePath,namePattern,find_in_subfolders,case_insensitive_name):
+def find_names_with_ls_resp_t(basePaths: list,namePattern,find_in_subfolders,case_insensitive_name):
     print("**************Begin search**************")
     print(bcolors.OKBLUE)
-    print("Base path: ", basePath)
+    print("Base paths: ", basePaths)
     print("Name pattern: ", namePattern)
     print("Recursive search is ",
           bcolors.OKGREEN + "on" + bcolors.ENDC if find_in_subfolders is True else bcolors.FAIL + "off" + bcolors.ENDC)
@@ -113,10 +113,12 @@ def find_names_with_ls_resp_t(basePath,namePattern,find_in_subfolders,case_insen
     sock.sendall(rq)
     sock.sendall(searchFlags)
 
-    basePath = encodeString(basePath)
     namePattern = encodeString(namePattern)
-    sock.sendall(struct.pack("=H", len(basePath)))
-    sock.sendall(basePath)
+    for basePath in basePaths:
+        basePath = encodeString(basePath)
+        sock.sendall(struct.pack("=H", len(basePath)))
+        sock.sendall(basePath)
+    sock.sendall(struct.pack("=H", 0)) # EOL indication for basePaths
     sock.sendall(struct.pack("=H", len(namePattern)))
     sock.sendall(namePattern)
     sock.sendall(struct.pack("=H", 0))  # no content pattern, no content search
@@ -154,17 +156,16 @@ def find_names_with_ls_resp_t(basePath,namePattern,find_in_subfolders,case_insen
 
 
 if __name__ == "__main__":
-    # base_path = '/sdcard'
     # ci_name_pattern = 'zIp'
     # cs_name_pattern = 'zip'
     
-    base_path = '/sdcard/sf'
-    ci_name_pattern = 'strange'
+    base_paths = ['/sdcard/sf', '/sdcard/abc']
+    ci_name_pattern = 'def'
 
-    # find_names_with_ls_resp_t(base_path,ci_name_pattern,True,True) # recursive, case-ins
-    # find_names_with_ls_resp_t(base_path,ci_name_pattern,False,True) # plain, case-ins
+    # find_names_with_ls_resp_t(base_paths,ci_name_pattern,True,True) # recursive, case-ins
+    # find_names_with_ls_resp_t(base_paths,ci_name_pattern,False,True) # plain, case-ins
 
-    # find_names_with_ls_resp_t(base_path, ci_name_pattern, True, False)  # recursive, case-sens
-    # find_names_with_ls_resp_t(base_path, ci_name_pattern, False, False)  # plain, case-sens
+    # find_names_with_ls_resp_t(base_paths, ci_name_pattern, True, False)  # recursive, case-sens
+    # find_names_with_ls_resp_t(base_paths, ci_name_pattern, False, False)  # plain, case-sens
     
-    find_names_with_ls_resp_t(base_path, ci_name_pattern, True, False)
+    find_names_with_ls_resp_t(base_paths, ci_name_pattern, True, False)
