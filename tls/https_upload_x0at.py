@@ -27,6 +27,9 @@ def x0at_upload(sourcePath):
     # receive TLS shared session secret hash (64-byte hex encoded SHA256)
     print("TLS master secret hash is:", toHex(sock.recv(32)))
 
+    # receive total upload size
+    size = struct.unpack("@Q", sock.recv(8))[0]
+    print("Total upload size: ", size)
     # receive upload progress
     while True:
         p = struct.unpack("@Q", sock.recv(8))[0]
