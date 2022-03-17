@@ -7,12 +7,16 @@ from standalone_xre.xre_common import sendStringWithLen, receiveStringWithLen
 import sys
 
 
-def x0at_upload(sourcePath):
+def https_upload(sourcePath, domain):
     sock = get_connected_local_socket()
 
     rq = bytearray(b'\x19')  # ACTION_HTTPS_URL_DOWNLOAD request
     x0at_id = bytearray(b'\x12\x00')
     sock.sendall(rq+x0at_id)
+
+    # send domain (x0.at or 0x0.st)
+    bDomain = bytearray(domain.encode("utf-8"))
+    sendStringWithLen(sock, bDomain)
 
     # send source path
     bDestPath = bytearray(sourcePath.encode("utf-8"))
@@ -57,7 +61,10 @@ if __name__ == '__main__':
     path = '/dev/shm/1.bin'
     with open(path, 'wb') as f:
         f.write(os.urandom(10000))
-    rclient = x0at_upload(path)
+
+    # rclient = https_upload(path, "x0.at")
+    rclient = https_upload(path, "0x0.st")
+
     if rclient is None:
         sys.exit(-1)
     rclient.close()
