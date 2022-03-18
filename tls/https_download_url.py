@@ -14,7 +14,7 @@ def remote_client_url_download(serverHost="v.gd",
                                unixSocketNameWithoutTrailingNull='anotherRoothelper'):
     sock = get_connected_local_socket(unixSocketNameWithoutTrailingNull)
 
-    rq = bytearray(b'\x18')  # ACTION_HTTPS_URL_DOWNLOAD request
+    rq = bytearray([ord(b'\x18') ^ (3 << 5)])  # ACTION_HTTPS_URL_DOWNLOAD request, flags: 011 (MSB: unused, httpsOnly: true, download to file: true)
     sock.sendall(rq)
 
     # send string-with-length of IP

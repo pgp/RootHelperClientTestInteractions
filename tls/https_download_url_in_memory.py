@@ -13,7 +13,7 @@ def remote_client_url_download(serverHost="v.gd",
     sock = get_connected_local_socket(unixSocketNameWithoutTrailingNull)
 
     # ACTION_HTTPS_URL_DOWNLOAD request
-    rq = bytearray([ord(b'\x18') ^ (7 << 5)])  # 7 = 111 radix 2 (all flags set)
+    rq = bytearray([ord(b'\x18') ^ (2 << 5)])  # ACTION_HTTPS_URL_DOWNLOAD request, flags: 010 (MSB: unused, httpsOnly: true, download to file: false)
     sock.sendall(rq)
 
     # send string-with-length of IP
