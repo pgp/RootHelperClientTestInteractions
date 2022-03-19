@@ -7,8 +7,7 @@ from standalone_xre.xre_common import receiveStringWithLen
 import sys
 
 
-def remote_client_url_download(serverHost="v.gd",
-                               serverPort=443,
+def remote_client_url_download(url="https://v.gd",
                                downloadDir='/dev/shm',
                                targetFilename='',
                                unixSocketNameWithoutTrailingNull='anotherRoothelper'):
@@ -18,11 +17,9 @@ def remote_client_url_download(serverHost="v.gd",
     sock.sendall(rq)
 
     # send string-with-length of IP
-    bServerHost = bytearray(serverHost.encode("utf-8"))
-    sock.sendall(struct.pack("@H", len(bServerHost)))
-    sock.sendall(bServerHost)
-    # send port
-    sock.sendall(struct.pack("@H", serverPort))
+    bUrl = bytearray(url.encode("utf-8"))
+    sock.sendall(struct.pack("@H", len(bUrl)))
+    sock.sendall(bUrl)
     # send download destination path
     bDestPath = bytearray(downloadDir.encode("utf-8"))
     sock.sendall(struct.pack("@H", len(bDestPath)))
@@ -61,13 +58,13 @@ def remote_client_url_download(serverHost="v.gd",
 # curl -O -L --http1.0 https://api.github.com/repos/openssl/openssl/tags
 
 if __name__ == '__main__':
-    # rclient = remote_client_url_download(serverHost="v.gd") # mandatory SNI
-    # rclient = remote_client_url_download(serverHost="fancyssl.hboeck.de",serverPort=443) # TLS 1.2 only
-    # rclient = remote_client_url_download(serverHost="download-installer.cdn.mozilla.net/pub/firefox/releases/66.0.3/win64/it/Firefox%20Setup%2066.0.3.exe", targetFilename='ff.exe')
-    rclient = remote_client_url_download(serverHost="u.nu",serverPort=443,targetFilename='unu.html')
-    # rclient = remote_client_url_download(serverHost="u.nu/fftest") # HTTP 301
-    # rclient = remote_client_url_download(serverHost="api.github.com/repos/openssl/openssl/tags", targetFilename='openssl_tags.json')
-    # rclient = remote_client_url_download(serverHost="www.cloudflare.com",serverPort=443,targetFilename='www_cloudflare.html')
+    # rclient = remote_client_url_download(url="v.gd") # mandatory SNI
+    # rclient = remote_client_url_download(url="fancyssl.hboeck.de") # TLS 1.2 only
+    # rclient = remote_client_url_download(url="download-installer.cdn.mozilla.net/pub/firefox/releases/66.0.3/win64/it/Firefox%20Setup%2066.0.3.exe", targetFilename='ff.exe')
+    rclient = remote_client_url_download(url="u.nu",targetFilename='unu.html')
+    # rclient = remote_client_url_download(url="u.nu/fftest") # HTTP 301
+    # rclient = remote_client_url_download(url="api.github.com/repos/openssl/openssl/tags", targetFilename='openssl_tags.json')
+    # rclient = remote_client_url_download(url="www.cloudflare.com",targetFilename='www_cloudflare.html')
     if rclient is None:
         sys.exit(-1)
     rclient.close()

@@ -7,8 +7,7 @@ from standalone_xre.xre_common import receiveStringWithLen
 import sys
 
 
-def remote_client_url_download(serverHost="v.gd",
-                               serverPort=443,
+def remote_client_url_download(url="https://v.gd",
                                unixSocketNameWithoutTrailingNull='anotherRoothelper'):
     sock = get_connected_local_socket(unixSocketNameWithoutTrailingNull)
 
@@ -16,12 +15,10 @@ def remote_client_url_download(serverHost="v.gd",
     rq = bytearray([ord(b'\x18') ^ (2 << 5)])  # ACTION_HTTPS_URL_DOWNLOAD request, flags: 010 (MSB: unused, httpsOnly: true, download to file: false)
     sock.sendall(rq)
 
-    # send string-with-length of IP
-    bServerHost = bytearray(serverHost.encode("utf-8"))
-    sock.sendall(struct.pack("@H", len(bServerHost)))
-    sock.sendall(bServerHost)
-    # send port
-    sock.sendall(struct.pack("@H", serverPort))
+    # send string-with-length of url
+    bUrl = bytearray(url.encode("utf-8"))
+    sock.sendall(struct.pack("@H", len(bUrl)))
+    sock.sendall(bUrl)
     # send download destination path (WILL BE IGNORED)
     bDestPath = bytearray()
     sock.sendall(struct.pack("@H", len(bDestPath)))
@@ -59,10 +56,10 @@ def remote_client_url_download(serverHost="v.gd",
 # curl -O -L --http1.0 https://api.github.com/repos/openssl/openssl/tags
 
 if __name__ == '__main__':
-    rclient = remote_client_url_download(serverHost="v.gd") # mandatory SNI
-    # rclient = remote_client_url_download(serverHost="fancyssl.hboeck.de",serverPort=443) # TLS 1.2 only
-    # rclient = remote_client_url_download(serverHost="u.nu",serverPort=443)
-    # rclient = remote_client_url_download(serverHost="www.cloudflare.com",serverPort=443)
+    rclient = remote_client_url_download(url="https://v.gd") # mandatory SNI
+    # rclient = remote_client_url_download(url="https://fancyssl.hboeck.de") # TLS 1.2 only
+    # rclient = remote_client_url_download(url="https://u.nu")
+    # rclient = remote_client_url_download(url="www.cloudflare.com")
     if rclient is None:
         sys.exit(-1)
     rclient.close()
