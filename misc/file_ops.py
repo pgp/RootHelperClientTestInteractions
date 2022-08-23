@@ -121,8 +121,7 @@ class FileOps(object):
         Use it only when you have SFTP access alone (i.e. you cannot open a SSH session for issuing 'rm -rf' command
         """
         ret = 0
-        S: List[Tuple[str, bool]] = []
-        S.append((path, False))
+        S: List[Tuple[str, bool]] = [(path, False)]
 
         while S:
             p = S.pop()
@@ -187,6 +186,14 @@ class FileOps(object):
     def rename(self, path1, path2):
         pass
 
+    @abc.abstractmethod
+    def chdir(self, path):
+        pass
+
+    @abc.abstractmethod
+    def getcwd(self):
+        pass
+
 
 class LocalFileOps(FileOps):
 
@@ -221,6 +228,12 @@ class LocalFileOps(FileOps):
     def rename(self, path1, path2):
         os.renames(path1, path2)
 
+    def chdir(self, path):
+        os.chdir(path)
+
+    def getcwd(self):
+        return os.getcwd()
+
 
 class SftpFileOps(FileOps):
 
@@ -245,6 +258,12 @@ class SftpFileOps(FileOps):
 
     def rename(self, path1, path2):
         self.sftp_client.posix_rename(path1, path2)
+
+    def chdir(self, path):
+        self.sftp_client.chdir(path)
+
+    def getcwd(self):
+        return self.sftp_client.getcwd()
 
 
 def create_sftp_client2(host, port, username, password, keyfilepath, keyfiletype):
