@@ -228,6 +228,8 @@ def receiveStringWithLen(conn):
 #  accept str/bytes/bytearray (implicit) for python 2
 #  accept bytes/bytearray for python 3
 def sendStringWithLen(conn, s):
+    if isinstance(s,str):
+        s = s.encode('utf-8')
     conn.sendall(struct.pack("@H", len(s)))  # assumed bytes in UTF-8 encoding
     conn.sendall(s)
 
