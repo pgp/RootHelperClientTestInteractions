@@ -1,4 +1,5 @@
 from net_common import *
+from standalone_xre.xre_common import sendStringWithLen
 import struct
 
 CREATE_FILE_RQ_BYTE = bytearray([ord(b'\x09') ^ (1 << 5)])
@@ -24,10 +25,13 @@ if __name__ == "__main__":
     sock.sendall(file_path)
     sock.sendall(fmode)
 
-    # creation strategy: 0 fallocate, 1 zeros, 2 random
+    # creation strategy: 0 fallocate, 1 zeros, 2 random, 3 random with custom seed (deterministic output)
     #### sock.sendall(b'\x00') # fallocate # not supported by Android API 19, disabled
     # sock.sendall(b'\x01') # zeros
-    sock.sendall(b'\x02') # random
+    # sock.sendall(b'\x02') # random
+    sock.sendall(b'\x03') # random with custom seed
+    # send seed (only if strategy == 3)
+    sendStringWithLen(sock, 'customSeed1234')
 
     sock.sendall(struct.pack("=Q", 2**30)) # 1 Gb file
     # sock.sendall(struct.pack("=Q", 0)) # 0 b (empty) file
