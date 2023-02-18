@@ -33,12 +33,14 @@ if __name__ == "__main__":
 
     creationStrategy |= 4  # supply custom seed for initializing PRNG
     creationStrategy |= 8  # request hash output for generated file
+    creationStrategy |= 16  # use custom backend cipher for PRNG
 
     sock.sendall(creationStrategy.to_bytes(1)) # byte order is not necessary here, since we are only packing a single byte
 
     sock.sendall(struct.pack("=Q", 2 ** 30))  # send size - 1 GB file
     # sock.sendall(struct.pack("=Q", 0)) # 0 b (empty) file
 
+    # run 'r create' without arguments for having lists with allowed values for output hash type and backend cipher
     # send seed if the corresponding flag is enabled
     if creationStrategy & 2:
         if creationStrategy & 4:
@@ -50,6 +52,13 @@ if __name__ == "__main__":
             targetHash = 'sha224'
             print(f'Requesting output hash {targetHash} for generated file')
             sendStringWithLen(sock, targetHash)
+        if creationStrategy & 16:
+            backendCipher = "ChaCha"
+            # backendCipher = "AES-128/CTR"
+            # backendCipher = "AES-256/CTR"
+            # backendCipher = "SHACAL2/CTR"
+            print(f'Using custom backend cipher {backendCipher} for generating file')
+            sendStringWithLen(sock, backendCipher)
 
     resp = sock.recv(1)  # response first byte: \x00 OK or \xFF ERROR
 
